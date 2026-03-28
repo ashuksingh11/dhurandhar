@@ -2,7 +2,7 @@
 
 ## Phases
 
-### Phase 1: Engine Foundation [PENDING]
+### Phase 1: Engine Foundation [DONE]
 - Game loop, state machine (main.js)
 - Input manager (input.js)
 - Config/constants (config.js)
@@ -12,7 +12,7 @@
 - Base entity class (entity.js)
 - Canvas rendering pipeline (renderer.js)
 
-### Phase 2: Player & Combat [PENDING]
+### Phase 2: Player & Combat [DONE]
 - Player controller with movement (player.js)
 - Melee: light/heavy attacks, combos, parry, dodge roll (combat.js)
 - Ranged: aim, fire, recoil, noise radius (combat.js)
@@ -21,20 +21,20 @@
 - Particle system with object pooling (particles.js)
 - Screen shake integration
 
-### Phase 3: Enemy AI [PENDING]
+### Phase 3: Enemy AI [DONE]
 - Base enemy AI with 5-state machine (enemy-base.js)
 - Vision cone rendering + detection
 - A* pathfinding (pathfinding.js)
 - Enemy types: gangster, enforcer, gunner
 - Faction awareness, coordinated alerts
 
-### Phase 4: Identity & Suspicion [PENDING]
+### Phase 4: Identity & Suspicion [DONE]
 - Dual identity system (identity.js)
 - Suspicion meter with triggers/decay/thresholds (suspicion.js)
 - HUD: health, suspicion, identity portrait, minimap, weapon bar (hud.js)
 - Cover actions system
 
-### Phase 5: Narrative System [PENDING]
+### Phase 5: Narrative System [DONE]
 - Dialogue engine with typewriter text + choices (dialogue.js)
 - Mission briefing screens (briefing.js)
 - Main menu, pause menu (menu.js)
