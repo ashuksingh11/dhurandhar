@@ -40,20 +40,20 @@
 - Main menu, pause menu (menu.js)
 - Timed dialogue choices
 
-### Phase 6: Levels & Chapters [PENDING]
+### Phase 6: Levels & Chapters [DONE]
 - JSON level format + loader (level-loader.js)
 - Trigger/event system
 - Build chapters 1-8 with tile data, spawns, triggers, dialogues
 - Territory meta-map between chapters (map.js)
 
-### Phase 7: Bosses & Setpieces [PENDING]
+### Phase 7: Bosses & Setpieces [DONE]
 - Rehman Dakait: vehicle chase + 3-phase fight
 - Major Iqbal: tactical 2-phase warehouse fight
 - Dawood: compound gauntlet + capture/kill choice
 - Uzair Baloch: arena brawl
 - Fire propagation (Ch8), wedding defense timer (Ch4)
 
-### Phase 8: Polish [PENDING]
+### Phase 8: Polish [DONE]
 - Web Audio API integration (audio.js)
 - Save/load system (LocalStorage)
 - Scoring + grade system (S/A/B/C/D)
