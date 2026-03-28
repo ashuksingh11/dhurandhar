@@ -7,8 +7,12 @@ import { Physics } from './engine/physics.js';
 import { ParticleSystem } from './engine/particles.js';
 import { Player } from './game/player.js';
 import { EnemyBase } from './game/enemies/enemy-base.js';
+import { IdentitySystem } from './game/identity.js';
+import { SuspicionSystem } from './game/suspicion.js';
 import { HUD } from './ui/hud.js';
 import { Menu } from './ui/menu.js';
+import { DialogueSystem } from './ui/dialogue.js';
+import { BriefingScreen } from './ui/briefing.js';
 
 class Game {
     constructor() {
@@ -21,11 +25,16 @@ class Game {
         this.particles = new ParticleSystem();
         this.hud = new HUD();
         this.menu = new Menu();
+        this.dialogue = new DialogueSystem();
+        this.briefing = new BriefingScreen();
 
         this.state = CONFIG.STATES.MENU;
         this.player = null;
+        this.identitySystem = null;
+        this.suspicionSystem = null;
         this.entities = [];
         this.chapterTitle = 'Ch.1 - The Juice Shop';
+        this.chapterData = null;
 
         this.lastTime = 0;
         this.running = true;
@@ -48,8 +57,14 @@ class Game {
             case CONFIG.STATES.MENU:
                 this.updateMenu(dt);
                 break;
+            case CONFIG.STATES.BRIEFING:
+                this.updateBriefing(dt);
+                break;
             case CONFIG.STATES.PLAY:
                 this.updatePlay(dt);
+                break;
+            case CONFIG.STATES.DIALOGUE:
+                this.updateDialogue(dt);
                 break;
             case CONFIG.STATES.PAUSED:
                 this.updatePaused(dt);
@@ -70,6 +85,11 @@ class Game {
         this.menu.draw(this.renderer.ctx);
     }
 
+    updateBriefing(dt) {
+        this.briefing.update(dt, this.input);
+        this.briefing.draw(this.renderer.ctx);
+    }
+
     updatePlay(dt) {
         // Pause
         if (this.input.justPressed(CONFIG.KEYS.PAUSE)) {
@@ -79,6 +99,10 @@ class Game {
 
         // Update world mouse position
         this.input.updateWorldMouse(this.camera);
+
+        // Update systems
+        if (this.identitySystem) this.identitySystem.update(dt);
+        if (this.suspicionSystem) this.suspicionSystem.update(dt, this);
 
         // Update player
         this.player.update(dt, this);
@@ -90,6 +114,23 @@ class Game {
             }
         }
 
+        // Check enemy kills for suspicion
+        for (const e of this.entities) {
+            if (e !== this.player && !e.alive && e._deathProcessed !== true) {
+                e._deathProcessed = true;
+                if (e.faction === CONFIG.FACTIONS.NEUTRAL && this.suspicionSystem) {
+                    this.suspicionSystem.onKillCivilian();
+                    this.hud.notify('Civilian killed! Suspicion +15', 2000);
+                } else if (this.identitySystem && this.identitySystem.isHamza && this.suspicionSystem) {
+                    // Killing while in Hamza mode is suspicious
+                    if (e.faction === this.player.faction || e.faction === CONFIG.FACTIONS.BALOCH) {
+                        this.suspicionSystem.onKillAlly();
+                        this.hud.notify('Ally killed! Suspicion +25', 2000);
+                    }
+                }
+            }
+        }
+
         // Update particles
         this.particles.update(dt);
 
@@ -98,11 +139,6 @@ class Game {
         this.camera.update(dt);
         this.camera.clamp(this.tilemap.width, this.tilemap.height);
 
-        // Suspicion decay in safe areas
-        if (this.player.suspicion > 0) {
-            this.player.suspicion = Math.max(0, this.player.suspicion - CONFIG.SUSPICION_DECAY_RATE * dt);
-        }
-
         // Check player death
         if (!this.player.alive) {
             this.state = CONFIG.STATES.GAMEOVER;
@@ -110,18 +146,22 @@ class Game {
         }
 
         // Render
-        this.renderer.clear();
-        this.renderer.drawGame(
-            { renderX: this.camera.renderX, renderY: this.camera.renderY,
-              viewW: this.camera.viewW, viewH: this.camera.viewH,
-              isVisible: this.camera.isVisible.bind(this.camera) },
-            this.tilemap,
-            this.entities,
-            this.particles,
-            this.player,
-            this.hud,
-            this
-        );
+        this.renderGameFrame();
+    }
+
+    updateDialogue(dt) {
+        this.dialogue.update(dt, this.input);
+
+        if (!this.dialogue.active) {
+            this.state = CONFIG.STATES.PLAY;
+            return;
+        }
+
+        // Draw game frozen in background
+        this.renderGameFrame();
+
+        // Draw dialogue on top
+        this.dialogue.draw(this.renderer.ctx);
     }
 
     updatePaused(dt) {
@@ -130,19 +170,7 @@ class Game {
             return;
         }
 
-        // Draw game frozen
-        this.renderer.clear();
-        this.renderer.drawGame(
-            { renderX: this.camera.renderX, renderY: this.camera.renderY,
-              viewW: this.camera.viewW, viewH: this.camera.viewH,
-              isVisible: this.camera.isVisible.bind(this.camera) },
-            this.tilemap,
-            this.entities,
-            this.particles,
-            this.player,
-            this.hud,
-            this
-        );
+        this.renderGameFrame();
 
         // Pause overlay
         const ctx = this.renderer.ctx;
@@ -184,7 +212,55 @@ class Game {
         }
     }
 
-    startGame() {
+    renderGameFrame() {
+        this.renderer.clear();
+        this.renderer.drawGame(
+            { renderX: this.camera.renderX, renderY: this.camera.renderY,
+              viewW: this.camera.viewW, viewH: this.camera.viewH,
+              isVisible: this.camera.isVisible.bind(this.camera) },
+            this.tilemap,
+            this.entities,
+            this.particles,
+            this.player,
+            this.hud,
+            this
+        );
+    }
+
+    // Start a dialogue sequence
+    startDialogue(dialogueData, onComplete) {
+        this.dialogue.start(dialogueData, () => {
+            this.state = CONFIG.STATES.PLAY;
+            if (onComplete) onComplete();
+        });
+        this.state = CONFIG.STATES.DIALOGUE;
+    }
+
+    async startGame() {
+        // Load chapter data
+        try {
+            const resp = await fetch('data/dialogue/chapter1.json');
+            this.chapterData = await resp.json();
+        } catch {
+            this.chapterData = null;
+        }
+
+        // Show briefing
+        if (this.chapterData && this.chapterData.briefing) {
+            this.state = CONFIG.STATES.BRIEFING;
+            this.briefing.show(this.chapterData.briefing, () => {
+                this._initLevel();
+                // Show intro dialogue
+                if (this.chapterData.intro) {
+                    this.startDialogue(this.chapterData.intro);
+                }
+            });
+        } else {
+            this._initLevel();
+        }
+    }
+
+    _initLevel() {
         // Load test level
         const levelData = generateTestLevel();
         this.tilemap.loadFromData(levelData);
@@ -197,6 +273,10 @@ class Game {
             playerSpawn.x * ts + ts / 4,
             playerSpawn.y * ts + ts / 4
         );
+
+        // Init systems
+        this.identitySystem = new IdentitySystem(this.player);
+        this.suspicionSystem = new SuspicionSystem(this.player, this.identitySystem);
 
         // Spawn entities
         this.entities = [this.player];
@@ -224,13 +304,12 @@ class Game {
                 );
                 this.entities.push(enemy);
             } else if (spawn.type === 'npc') {
-                // Simple civilian NPC (passive entity)
                 const npc = new EnemyBase(
                     spawn.x * ts + ts / 4,
                     spawn.y * ts + ts / 4,
                     { faction: CONFIG.FACTIONS.NEUTRAL, color: '#aa9977', hp: 10, speed: 30, patrol: [] }
                 );
-                npc.visionRange = 0; // civilians don't detect
+                npc.visionRange = 0;
                 this.entities.push(npc);
             }
         }
@@ -238,7 +317,7 @@ class Game {
         this.chapterTitle = 'Ch.1 - The Juice Shop';
         this.state = CONFIG.STATES.PLAY;
         this.hud.notify('Operation Dhurandhar begins...', 3000);
-        this.hud.notify('Navigate the streets of Lyari', 4000);
+        this.hud.notify('TAB to switch identity | WASD to move', 5000);
     }
 }
 

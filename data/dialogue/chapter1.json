@@ -1,0 +1,72 @@
+{
+    "briefing": {
+        "chapter": 1,
+        "title": "The Juice Shop",
+        "subtitle": "Where every stranger is a suspect",
+        "location": "Lyari District, Karachi",
+        "briefingText": "Your cover identity: Hamza Ali Mazari. Make contact with handler Mohammed Aalam.",
+        "objectives": [
+            "Navigate to Mohammed Aalam's juice shop",
+            "Maintain cover - do not raise suspicion",
+            "Learn the layout of Lyari's streets"
+        ]
+    },
+    "intro": {
+        "lines": [
+            {
+                "speaker": "sanyal",
+                "text": "Jaskirat... from this moment, you are Hamza Ali Mazari. A Baloch from Quetta. You work as a delivery boy. You know nothing about India."
+            },
+            {
+                "speaker": "sanyal",
+                "text": "Your handler is Mohammed Aalam. He runs a juice shop in the heart of Lyari. Find him. He will give you your first assignment."
+            },
+            {
+                "speaker": "jaskirat",
+                "text": "And if my cover is blown?"
+            },
+            {
+                "speaker": "sanyal",
+                "text": "Then you never existed. There will be no rescue. No acknowledgment. Operation Dhurandhar lives and dies with you."
+            },
+            {
+                "speaker": "narrator",
+                "text": "You step into the narrow streets of Lyari. The air is thick with dust, spices, and the distant sound of gunfire. Welcome to Karachi."
+            }
+        ]
+    },
+    "meet_aalam": {
+        "lines": [
+            {
+                "speaker": "aalam",
+                "text": "Ah, you must be the new delivery boy! Come, come. Sit. Have some juice. The mango is fresh today."
+            },
+            {
+                "speaker": "hamza",
+                "text": "Mohammed bhai? I was told you could help me find work."
+            },
+            {
+                "speaker": "aalam",
+                "text": "Work? In Lyari, work finds you. But first... tell me. Do you know who Rehman Dakait is?"
+            },
+            {
+                "speaker": "hamza",
+                "text": "I've heard stories."
+            },
+            {
+                "speaker": "aalam",
+                "text": "Stories don't do him justice. He controls every street, every shop, every life in this district. If you want to survive here, you need his blessing.",
+                "choices": [
+                    { "id": "brave", "text": "I'm not afraid of gangsters." },
+                    { "id": "cautious", "text": "I'll keep my head down." },
+                    { "id": "eager", "text": "How do I meet him?" }
+                ],
+                "choiceTimeout": 5000
+            },
+            {
+                "speaker": "aalam",
+                "text": "Good. For now, take this package to the market. Prove you can follow orders, and doors will open."
+            }
+        ]
+    }
+}
